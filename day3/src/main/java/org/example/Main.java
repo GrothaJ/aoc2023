@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -14,13 +16,15 @@ public class Main {
     private static final Set<Character> DIGITS = Set.of('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
 
     public static void main(String[] args) throws IOException {
-        int sum = 0;
         String fileContent = Files.readString(PATH);
-        Set<Character> symbols = getSymbols(fileContent);
         List<String> lines = Files.readAllLines(PATH);
         char[][] matrix = createMatrix(lines);
         int matrixWidth = getLineLength(lines);
         int matrixHeight = lines.size();
+
+        // Solution 1
+        int sum = 0;
+        Set<Character> symbols = getSymbols(fileContent);
         for (int i = 0; i < matrixHeight; i++) {
             for (int j = 0; j < matrixWidth; j++) {
                 char c = matrix[i][j];
@@ -34,6 +38,21 @@ public class Main {
             }
         }
         System.out.println(sum);
+
+        // Solution 2
+        int solution = 0;
+        List<String> gears = findGears(matrix, matrixWidth, matrixHeight);
+        for (String gear : gears) {
+            String[] arr = gear.split(" ");
+            int gearI = Integer.parseInt(arr[0]);
+            int gearJ = Integer.parseInt(arr[1]);
+            List<Integer> numbers = getNumbersAroundGear(matrix, gearI, gearJ);
+            if (numbers.size() == 2) {
+                solution += numbers.stream()
+                    .reduce((num1, num2) -> num1 * num2).orElse(0);
+            }
+        }
+        System.out.println(solution);
     }
 
     private static Set<Character> getSymbols(String fileContent) {
@@ -135,5 +154,74 @@ public class Main {
             }
         }
         return false;
+    }
+
+    private static List<String> findGears(char[][] matrix, int matrixWidth, int matrixHeight) {
+        List<String> gears = new LinkedList<>();
+        for (int i = 0; i < matrixHeight; i++) {
+            for (int j = 0; j < matrixWidth; j++) {
+                char c = matrix[i][j];
+                if (c == '*') {
+                    gears.add(i + " " + j);
+                }
+            }
+        }
+        return gears;
+    }
+
+    private static List<Integer> getNumbersAroundGear(char[][] matrix, int gearI, int gearJ) {
+        Set<Integer> numbers = new HashSet<>();
+        if (DIGITS.contains(matrix[gearI][gearJ - 1])) {
+            int number = formNumber(matrix, gearI, gearJ - 1);
+            numbers.add(number);
+        }
+        if (DIGITS.contains(matrix[gearI][gearJ + 1])) {
+            int number = formNumber(matrix, gearI, gearJ + 1);
+            numbers.add(number);
+        }
+        if (DIGITS.contains(matrix[gearI - 1][gearJ - 1])) {
+            int number = formNumber(matrix, gearI - 1, gearJ - 1);
+            numbers.add(number);
+        }
+        if (DIGITS.contains(matrix[gearI - 1][gearJ])) {
+            int number = formNumber(matrix, gearI - 1, gearJ);
+            numbers.add(number);
+        }
+        if (DIGITS.contains(matrix[gearI - 1][gearJ + 1])) {
+            int number = formNumber(matrix, gearI - 1, gearJ + 1);
+            numbers.add(number);
+        }
+        if (DIGITS.contains(matrix[gearI + 1][gearJ - 1])) {
+            int number = formNumber(matrix, gearI + 1, gearJ - 1);
+            numbers.add(number);
+        }
+        if (DIGITS.contains(matrix[gearI + 1][gearJ])) {
+            int number = formNumber(matrix, gearI + 1, gearJ);
+            numbers.add(number);
+        }
+        if (DIGITS.contains(matrix[gearI + 1][gearJ + 1])) {
+            int number = formNumber(matrix, gearI + 1, gearJ + 1);
+            numbers.add(number);
+        }
+        return new ArrayList<>(numbers);
+    }
+
+    private static int formNumber(char[][] matrix, int i, int j) {
+        StringBuilder number = new StringBuilder(String.valueOf(matrix[i][j]));
+        for (int iterator = 1; iterator <= 2; iterator++) {
+            if (!DIGITS.contains(matrix[i][j + iterator])) {
+                break;
+            } else {
+                number.append(matrix[i][j + iterator]);
+            }
+        }
+        for (int iterator = 1; iterator <= 2; iterator++) {
+            if (!DIGITS.contains(matrix[i][j - iterator])) {
+                break;
+            } else {
+                number.insert(0, matrix[i][j - iterator]);
+            }
+        }
+        return Integer.parseInt(number.toString());
     }
 }
